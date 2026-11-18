@@ -33,7 +33,7 @@ function normRand(mean = 0, stdDev = 1) {
 }
 
 const run = document.getElementById("run-button");
-let lastSimData = null;
+let simMarketData = null;
 
 run.addEventListener("click", () => { runSim(); });
 
@@ -105,6 +105,7 @@ function runSim() {
     const p50 = [];
     const p70 = [];
     const p90 = [];
+    const pct = [];
 
     for (let step = 0; step <= totalSteps; step++) {
         const yearNum = (step / contriFreq).toFixed(1);
@@ -117,30 +118,43 @@ function runSim() {
         p50.push(stepValues[Math.floor(iterations * 0.50)]);
         p70.push(stepValues[Math.floor(iterations * 0.70)]);
         p90.push(stepValues[Math.floor(iterations * 0.90)]);
+
+        const savings = savingsPath[step];
+        const simsAboveSavings = stepValues.filter(i => i > savings).length;
+        pct.push(simsAboveSavings / iterations);
     }
 
-    lastSimData = { p10 , p30 , p50 , p70 , p90 , savingsPath , totalSteps , contriFreq }
-    drawChart("simChart", lastSimData);
+    simMarketData = [
+        { data: p10 , name: "p10", color: "#44ce1b"},
+        { data: p30 , name: "p30", color: "#bbdb44"},
+        { data: p50 , name: "p50", color: "#2600ff"},
+        { data: p70 , name: "p70", color: "#f2a134"},
+        { data: p90 , name: "p90", color: "#e51f1f"} 
+    ]
+
+    // Chart Settings ...
+    const logspace = document.getElementById("logspace").checked;
+    const benchmark = document.getElementById("savings-subtract").checked;
+
+    drawChart("simChart", simMarketData, totalSteps, contriFreq, savingsPath, logspace, benchmark, true);
 }
 
-function drawChart(canvasId, { p10 , p30 , p50 , p70 , p90 , savingsPath , totalSteps , contriFreq }) {
-    
-    const logspace = document.getElementById("logspace").checked;
-    const subtractSavings = document.getElementById("savings-subtract").checked;
+function drawChart(canvasId, data, totalSteps, contriFreq, benchmarkData = null, logspace = false, benchmark = false, fill = false) {
 
+    // Transform functions
     const logt = (arr) => logspace ? arr.map(v => v > 0 ? Math.log(v) : 0) : arr;
-    const subt = (arr, sav) => subtractSavings ? arr.map((v, i) => v - sav[i]) : arr;
+    const subt = (arr, bch) => (benchmark && bch) ? arr.map((v, i) => v - bch[i]) : arr;
 
-    const baseSavings = logt(savingsPath);
-    const tsavingsPath = subt(baseSavings, baseSavings);
+    const logBenchmark = benchmarkData ? logt(benchmarkData) : null;
 
-    const fullTransform = (arr) => subt(logt(arr), baseSavings);
+    const fullTransform = (arr) => subt(logt(arr), logBenchmark);
 
-    const tp10 = fullTransform(p10);
-    const tp30 = fullTransform(p30);
-    const tp50 = fullTransform(p50);
-    const tp70 = fullTransform(p70);
-    const tp90 = fullTransform(p90);
+    const transformedBenchmark = benchmarkData ? fullTransform(benchmarkData) : null
+
+    const transformedData = data.map(v => ({
+        ...v,
+        data: fullTransform(v.data)
+    }));
     
     const canvas = document.getElementById(canvasId);
     const ctx = canvas.getContext("2d");
@@ -160,7 +174,7 @@ function drawChart(canvasId, { p10 , p30 , p50 , p70 , p90 , savingsPath , total
 
     ctx.clearRect(0, 0, width, height);
 
-    const allValues = [...tp90, ...tp70, ...tp50, ...tp30, ...tp10, ...tsavingsPath];
+    const allValues = [...transformedData.flatMap(v => v.data), ...(transformedBenchmark || [])];
     const minVal = Math.min(...allValues) * 0.95 ||   0;
     const maxVal = Math.max(...allValues) * 1.05 || 100;
 
@@ -197,19 +211,28 @@ function drawChart(canvasId, { p10 , p30 , p50 , p70 , p90 , savingsPath , total
         ctx.fillText(`Yr ${yr}`, x, height - pad.bottom + 10);
     }
 
-    ctx.fillStyle = "rgba(16, 185, 129, 0.12)";
-    ctx.beginPath();
-    tp90.forEach((val, step) => {
-        const x = getX(step), y = getY(val);
-        step === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
-    for (let step = totalSteps; step >= 0; step--) {
-        ctx.lineTo(getX(step), getY(tp10[step]));
-    }
-    ctx.closePath();
-    ctx.fill();
+    if (fill && transformedData.length >= 2) {
+        const lower = transformedData.at(0).data; 
+        const upper = transformedData.at(-1).data; 
 
-    function plotLine(data, color, lineWidth = 2, dashed = false) {
+        ctx.fillStyle = "rgba(16, 185, 129, 0.12)";
+        ctx.beginPath();
+        
+        upper.forEach((val, step) => {
+            const x = getX(step), y = getY(val);
+            step === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        });
+        
+        for (let step = totalSteps; step >= 0; step--) {
+            ctx.lineTo(getX(step), getY(lower[step]));
+        }
+        
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    const legend = [];
+    function plotLine(data, color, name, lineWidth = 2, dashed = false) {
         ctx.save();
         ctx.strokeStyle = color;
         ctx.lineWidth = lineWidth;
@@ -223,23 +246,16 @@ function drawChart(canvasId, { p10 , p30 , p50 , p70 , p90 , savingsPath , total
         });
         ctx.stroke();
         ctx.restore();
+
+        legend.push({ label: name , color: color });
     }
 
-    plotLine(tp90, "#44ce1b", 2);       
-    plotLine(tp70, "#bbdb44", 2);    
-    plotLine(tp50, "#2600ff", 2);        
-    plotLine(tp30, "#f2a134", 2); 
-    plotLine(tp10, "#e51f1f", 2);           
-    plotLine(tsavingsPath, "#6b7280", 2, true); 
+    const lineWidth = 2;
+    transformedData.forEach(v => { plotLine(v.data, v.color, v.name, lineWidth) });
 
-    const legend = [
-        { label: "90p", color: "#44ce1b" },
-        { label: "70p", color: "#bbdb44" },
-        { label: "50p", color: "#2600ff" },
-        { label: "30p", color: "#f2a134" },
-        { label: "10p", color: "#e51f1f" },
-        { label: "Savings", color: "#6b7280" }
-    ];
+    // Add Benchmark
+    if (benchmark) plotLine(transformedBenchmark, "#6b7280", "Savings", lineWidth, true); 
+    
 
     let legendX = pad.left;
     ctx.textAlign = "left";
