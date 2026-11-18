@@ -5,12 +5,13 @@
     <title>Saving/Investing Simulation</title>
     
     <link rel="stylesheet" href="eseistyle.css">
+    <script src="esei.js" defer></script>
 </head>
 
 <br><hr><br> <!-- Contribution Settings --> 
 
 <label for="lump-sum">Lump-sum Amount:&nbsp;</label>
-<input type="number" id="lump-sum" step="any" min="0" value="1000" autocomplete="off">
+<input type="number" id="lump-sum" step="any" min="0" value="1000">
 
 <br><br>
 
@@ -29,19 +30,37 @@
 <br><br>
 
 <label for="contri-amount">Contribution Amount:&nbsp;</label>
-<input type="number" id="contri-amount" step="any" min="0" value="125" autocomplete="off">
-<br>
+<input type="number" id="contri-amount" step="any" min="0" value="125">
 
-<br><hr><br> <!-- Return Settings --> 
+<br><br><hr><br> <!-- Market Return Settings --> 
 
 <label for="preset-returns">Presets:&nbsp;</label>
 <select id="preset-returns">
     <option value="">Manual</option>
-    <option value="spy">S&P500</option>
-    <option value="qqq">NASDAQ 100</option>
+    <option value="SPY" selected>S&P500</option>
+    <option value="QQQ">NASDAQ 100</option>
 </select>
 
-<br><br><br><br>
-<button id="submit-btn">Run Simulation</button>
+<br><br>
 
-<p id="output"></p>
+<label for="cagr">Average Growth %:&nbsp;</label>
+<input type="number" id="cagr" class="marketInputs" step="any" min="0" value="9.60">
+
+<br><br>
+
+<label for="volatility">Risk / Volatility %:&nbsp;</label>
+<input type="number" id="volatility" class="marketInputs" step="any" min="0" value="17.50" max="100">
+
+<br><br><hr><br> <!-- Savings Return Settings --> 
+
+<label for="interest">Average Interest %:&nbsp;</label>
+<input type="number" id="interest" step="any" min="0" value="3.15">
+
+<br><br><hr><br>
+
+<label for="iterations">Monte Carlo Iterations:&nbsp;</label>
+<input type="number" id="iterations" step="any" min="0" value="1000">
+
+<br><br>
+<label>Run Monte Carlo:&nbsp;</label>
+<button id="submit-btn" class="wide-button"> Start! </button>
