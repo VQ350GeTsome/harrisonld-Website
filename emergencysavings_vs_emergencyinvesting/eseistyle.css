@@ -6,4 +6,5 @@
     margin-left : 0;
     margin-right : auto;
     width : 33%;
+    min-width: 375px;
 }

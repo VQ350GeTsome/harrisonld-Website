@@ -35,21 +35,22 @@ function normRand(mean = 0, stdDev = 1) {
 }
 
 const run = document.getElementById("run-button");
+let lastSimData = null;
 
 run.addEventListener("click", () => {
 
     console.log("Simulation Running ... ")
 
     // General settings
-    const lumpSum = document.getElementById("lump-sum").value;
-    const contriFreq = document.getElementById("contri-freq").value;
-    const contriAmount = document.getElementById("contri-amount").value;
-    const years = document.getElementById("years").value;
+    const lumpSum = parseFloat(document.getElementById("lump-sum").value) || 10000;
+    const contriFreq = parseInt(document.getElementById("contri-freq").value, 10) || 12;
+    const contriAmount = parseFloat(document.getElementById("contri-amount").value) || 125;
+    const years = parseFloat(document.getElementById("years").value) || 10;
 
     const paths = [];
 
     // Get savings specific settings ...
-    const interest = document.getElementById("interest")
+    const interest = parseFloat(document.getElementById("interest").value / 100) || 0.0315;
 
     // Calculate steps and delta time
     const totalSteps = years * contriFreq;
@@ -69,7 +70,7 @@ run.addEventListener("click", () => {
     console.log("Savings Simulation Complete!")
 
     // Get all market sim specific settings ...
-    const iterations = document.getElementById("iterations").value;
+    const iterations = parseInt(document.getElementById("iterations").value) || 1000;
     const cagr = cagrInput.value / 100.0;
     const volatility = volatilityInput.value / 100.0;
 
@@ -96,10 +97,133 @@ run.addEventListener("click", () => {
     console.log("Market Simulation Complete!")
     console.log(`Generated ${paths.length} paths with ${totalSteps} steps each.`);
     console.log("All Simulations Complete!")
+    console.log("Sorting ...")
+
+    const labels = [];
+    const p10 = [];
+    const p50 = [];
+    const p90 = [];
+
+    for (let step = 0; step <= totalSteps; step++) {
+        const yearNum = (step / contriFreq).toFixed(1);
+        labels.push(step % contriFreq === 0 ? `Year ${step / contriFreq}` : `Yr ${yearNum}`);
+
+        const stepValues = paths.map(path => path[step]).sort((a, b) => a - b);
+        
+        p10.push(stepValues[Math.floor(iterations * 0.10)]);
+        p50.push(stepValues[Math.floor(iterations * 0.50)]);
+        p90.push(stepValues[Math.floor(iterations * 0.90)]);
+    }
+
+    lastSimData = { p10 , p50 , p90 , savingsPath , totalSteps , contriFreq }
+    drawChart("simChart", lastSimData);
 
 });
 
+function drawChart(canvasId, { p10 , p50 , p90 , savingsPath , totalSteps , contriFreq }) {
+    const canvas = document.getElementById(canvasId);
+    const ctx = canvas.getContext("2d");
 
+    const rect = canvas.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
 
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+    const pad = { top: 45, right: 30, bottom: 45, left: 85 };
+    const plotW = width - pad.left - pad.right;
+    const plotH = height - pad.top - pad.bottom;
 
+    ctx.clearRect(0, 0, width, height);
+
+    const allValues = [...p90, ...p50, ...p10, ...savingsPath];
+    const minVal = 0;
+    const maxVal = Math.max(...allValues) * 1.05 || 100;
+
+    const getX = (step) => pad.left + (step / totalSteps) * plotW;
+    const getY = (val) => pad.top + plotH - ((val - minVal) / (maxVal - minVal)) * plotH;
+
+    ctx.strokeStyle = "#e5e7eb";
+    ctx.fillStyle = "#4b5563";
+    ctx.font = "12px sans-serif";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+
+    const yTicks = 5;
+    for (let i = 0; i <= yTicks; i++) {
+        const val = minVal + (maxVal - minVal) * (i / yTicks);
+        const y = getY(val);
+
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(width - pad.right, y);
+        ctx.stroke();
+
+        ctx.fillText("$" + Math.round(val).toLocaleString(), pad.left - 10, y);
+    }
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    const totalYears = Math.round(totalSteps / contriFreq);
+    const yearStep = Math.max(1, Math.ceil(totalYears / 10));
+
+    for (let yr = 0; yr <= totalYears; yr += yearStep) {
+        const step = Math.min(totalSteps, yr * contriFreq);
+        const x = getX(step);
+        ctx.fillText(`Yr ${yr}`, x, height - pad.bottom + 10);
+    }
+
+    ctx.fillStyle = "rgba(16, 185, 129, 0.12)";
+    ctx.beginPath();
+    p90.forEach((val, step) => {
+        const x = getX(step), y = getY(val);
+        step === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    for (let step = totalSteps; step >= 0; step--) {
+        ctx.lineTo(getX(step), getY(p10[step]));
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    function plotLine(data, color, lineWidth = 2, dashed = false) {
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lineWidth;
+        if (dashed) ctx.setLineDash([6, 4]);
+
+        ctx.beginPath();
+        data.forEach((val, step) => {
+            const x = getX(step);
+            const y = getY(val);
+            step === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    plotLine(p90, "#10b981", 2);           
+    plotLine(p50, "#2563eb", 2.5);         
+    plotLine(p10, "#ef4444", 2);           
+    plotLine(savingsPath, "#6b7280", 2, true); 
+
+    const legend = [
+        { label: "90th Percentile", color: "#10b981" },
+        { label: "Median (50th)", color: "#2563eb" },
+        { label: "10th Percentile", color: "#ef4444" },
+        { label: "Savings", color: "#6b7280" }
+    ];
+
+    let legendX = pad.left;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    legend.forEach((item) => {
+        ctx.fillStyle = item.color;
+        ctx.fillRect(legendX, 14, 14, 14);
+        ctx.fillStyle = "#111827";
+        ctx.fillText(item.label, legendX + 20, 21);
+        legendX += ctx.measureText(item.label).width + 42;
+    });
+}
