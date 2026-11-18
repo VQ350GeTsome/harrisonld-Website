@@ -1,5 +1,3 @@
-
-
 // Market Presets
 
 const market_presets = {
@@ -37,14 +35,15 @@ function normRand(mean = 0, stdDev = 1) {
 const run = document.getElementById("run-button");
 let lastSimData = null;
 
-run.addEventListener("click", () => {
+run.addEventListener("click", () => { runSim(); });
 
+function runSim() {
     console.log("Simulation Running ... ")
 
     // General settings
     const lumpSum = parseFloat(document.getElementById("lump-sum").value) || 10000;
     const contriFreq = parseInt(document.getElementById("contri-freq").value, 10) || 12;
-    const contriAmount = parseFloat(document.getElementById("contri-amount").value) || 125;
+    const contriAmount = parseFloat(document.getElementById("contri-amount").value) || 0;
     const years = parseFloat(document.getElementById("years").value) || 10;
 
     const paths = [];
@@ -99,9 +98,12 @@ run.addEventListener("click", () => {
     console.log("All Simulations Complete!")
     console.log("Sorting ...")
 
+    // Sort into percentiles
     const labels = [];
     const p10 = [];
+    const p30 = [];
     const p50 = [];
+    const p70 = [];
     const p90 = [];
 
     for (let step = 0; step <= totalSteps; step++) {
@@ -111,16 +113,35 @@ run.addEventListener("click", () => {
         const stepValues = paths.map(path => path[step]).sort((a, b) => a - b);
         
         p10.push(stepValues[Math.floor(iterations * 0.10)]);
+        p30.push(stepValues[Math.floor(iterations * 0.30)]);
         p50.push(stepValues[Math.floor(iterations * 0.50)]);
+        p70.push(stepValues[Math.floor(iterations * 0.70)]);
         p90.push(stepValues[Math.floor(iterations * 0.90)]);
     }
 
-    lastSimData = { p10 , p50 , p90 , savingsPath , totalSteps , contriFreq }
+    lastSimData = { p10 , p30 , p50 , p70 , p90 , savingsPath , totalSteps , contriFreq }
     drawChart("simChart", lastSimData);
+}
 
-});
+function drawChart(canvasId, { p10 , p30 , p50 , p70 , p90 , savingsPath , totalSteps , contriFreq }) {
+    
+    const logspace = document.getElementById("logspace").checked;
+    const subtractSavings = document.getElementById("savings-subtract").checked;
 
-function drawChart(canvasId, { p10 , p50 , p90 , savingsPath , totalSteps , contriFreq }) {
+    const logt = (arr) => logspace ? arr.map(v => v > 0 ? Math.log(v) : 0) : arr;
+    const subt = (arr, sav) => subtractSavings ? arr.map((v, i) => v - sav[i]) : arr;
+
+    const baseSavings = logt(savingsPath);
+    const tsavingsPath = subt(baseSavings, baseSavings);
+
+    const fullTransform = (arr) => subt(logt(arr), baseSavings);
+
+    const tp10 = fullTransform(p10);
+    const tp30 = fullTransform(p30);
+    const tp50 = fullTransform(p50);
+    const tp70 = fullTransform(p70);
+    const tp90 = fullTransform(p90);
+    
     const canvas = document.getElementById(canvasId);
     const ctx = canvas.getContext("2d");
 
@@ -139,8 +160,8 @@ function drawChart(canvasId, { p10 , p50 , p90 , savingsPath , totalSteps , cont
 
     ctx.clearRect(0, 0, width, height);
 
-    const allValues = [...p90, ...p50, ...p10, ...savingsPath];
-    const minVal = 0;
+    const allValues = [...tp90, ...tp70, ...tp50, ...tp30, ...tp10, ...tsavingsPath];
+    const minVal = Math.min(...allValues) * 0.95 ||   0;
     const maxVal = Math.max(...allValues) * 1.05 || 100;
 
     const getX = (step) => pad.left + (step / totalSteps) * plotW;
@@ -178,12 +199,12 @@ function drawChart(canvasId, { p10 , p50 , p90 , savingsPath , totalSteps , cont
 
     ctx.fillStyle = "rgba(16, 185, 129, 0.12)";
     ctx.beginPath();
-    p90.forEach((val, step) => {
+    tp90.forEach((val, step) => {
         const x = getX(step), y = getY(val);
         step === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
     for (let step = totalSteps; step >= 0; step--) {
-        ctx.lineTo(getX(step), getY(p10[step]));
+        ctx.lineTo(getX(step), getY(tp10[step]));
     }
     ctx.closePath();
     ctx.fill();
@@ -204,15 +225,19 @@ function drawChart(canvasId, { p10 , p50 , p90 , savingsPath , totalSteps , cont
         ctx.restore();
     }
 
-    plotLine(p90, "#10b981", 2);           
-    plotLine(p50, "#2563eb", 2.5);         
-    plotLine(p10, "#ef4444", 2);           
-    plotLine(savingsPath, "#6b7280", 2, true); 
+    plotLine(tp90, "#44ce1b", 2);       
+    plotLine(tp70, "#bbdb44", 2);    
+    plotLine(tp50, "#2600ff", 2);        
+    plotLine(tp30, "#f2a134", 2); 
+    plotLine(tp10, "#e51f1f", 2);           
+    plotLine(tsavingsPath, "#6b7280", 2, true); 
 
     const legend = [
-        { label: "90th Percentile", color: "#10b981" },
-        { label: "Median (50th)", color: "#2563eb" },
-        { label: "10th Percentile", color: "#ef4444" },
+        { label: "90p", color: "#44ce1b" },
+        { label: "70p", color: "#bbdb44" },
+        { label: "50p", color: "#2600ff" },
+        { label: "30p", color: "#f2a134" },
+        { label: "10p", color: "#e51f1f" },
         { label: "Savings", color: "#6b7280" }
     ];
 
@@ -227,3 +252,5 @@ function drawChart(canvasId, { p10 , p50 , p90 , savingsPath , totalSteps , cont
         legendX += ctx.measureText(item.label).width + 42;
     });
 }
+
+runSim();

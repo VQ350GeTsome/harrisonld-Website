@@ -9,7 +9,9 @@
 
 </head>
 
-<br><hr class="hf-ln">            <!-- Contribution Settings --> 
+<!-- Contribution Settings --> 
+
+<br><hr class="hf-ln">            
 <h3>Contribution Settings ...</h3>
 
 <label for="lump-sum">Lump-sum Amount:&nbsp;</label>
@@ -34,7 +36,9 @@
 <label for="contri-amount">Contribution Amount:&nbsp;</label>
 <input type="number" id="contri-amount" step="any" min="0" value="125">
 
-<br><br><hr class="hf-ln">            <!-- Market Return Settings --> 
+<!-- Market Return Settings --> 
+
+<br><br><hr class="hf-ln">            
 <h3>Market Return Settings ...</h3>
 
 <label for="preset-returns">Presets:&nbsp;</label>
@@ -54,17 +58,21 @@
 <label for="volatility">Risk / Volatility %:&nbsp;</label>
 <input type="number" id="volatility" class="marketInputs" step="any" min="0" value="17.50" max="100">
 
-<br><br><hr class="hf-ln">          <!-- Savings Return Settings --> 
+<!-- Savings Return Settings --> 
+
+<br><br><hr class="hf-ln">          
 <h3>Savings Return Settings ...</h3>
 
 <label for="interest">Average Interest %:&nbsp;</label>
 <input type="number" id="interest" step="any" min="0" value="3.15">
 
-<br><br><hr class="hf-ln">          <!-- Simulation Settings --> 
+<!-- Simulation Settings --> 
+
+<br><br><hr class="hf-ln">          
 <h3>Simulation Settings ...</h3>
 
 <label for="iterations">Monte Carlo Iterations:&nbsp;</label>
-<input type="number" id="iterations" step="any" min="0" value="1000">
+<input type="number" id="iterations" step="any" min="5" value="1000">
 
 <br><br>
 
@@ -72,11 +80,24 @@
 <input type="number" id="years" step="any" min="0" max="100" value="15">
 
 <br><br>
+
+<label for="logspace">Transform to Logspace?&nbsp;</label>
+<input type="checkbox" id="logspace">
+
+<br><br>
+
+<label for="savings-subtract">Plot Excess Return Over Savings?&nbsp;</label>
+<input type="checkbox" id="savings-subtract">
+
+<br><br>
+
 <label>Run Monte Carlo:&nbsp;</label>
 <button id="run-button" class="wide-button"> Start! </button>
 
 <br><br>
 
-<div id="chart-container" style="position: relative; width: 40%; height: 40vh; min-height: 200px; min-width: 0; margin-left: 0; margin-right: auto;">
-    <canvas id="simChart" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block; border: 1px solid #e5e7eb; background: #ffffff;"></canvas>
+<!-- Chart --> 
+
+<div id="chart-container" style="position: relative; width: 66%; height: 33vh; min-height: 0; min-width: 0; margin-left: 0; margin-right: auto;">
+    <canvas id="simChart" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block; border: 2px solid #000; background: #ffffff;"></canvas>
 </div>
