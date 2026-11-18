@@ -7,6 +7,10 @@ body {
   background-image: linear-gradient(rgba(000,000,000,0.63), rgba(000,000,000,0.63)), url(bg.jpg);
 }
 
+.bullets-w li::marker {
+    color: rgb(255,255,255);
+  }
+
 .first-w { 
   color : white; 
   font-size :x-large;

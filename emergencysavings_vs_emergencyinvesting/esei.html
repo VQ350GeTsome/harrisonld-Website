@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Saving/Investing Simulation</title>
+    
+    <link rel="stylesheet" href="eseistyle.css">
+</head>
+
+<br><hr><br> <!-- Contribution Settings --> 
+
+<label for="lump-sum">Lump-sum Amount:&nbsp;</label>
+<input type="number" id="lump-sum" step="any" min="0" value="1000" autocomplete="off">
+
+<br><br>
+
+<label for="contri-freq">Contribution Frequency:&nbsp;</label>
+<select id="contri-freq">  
+    <option value="252">Daily</option>
+    <option value="52" selected>Weekly</option>
+    <option value="26">Biweekly</option>
+    <option value="12">Monthly</option>
+    <option value="6">Bimonthly</option>
+    <option value="4">Quarterly</option>
+    <option value="2">Biquarterly</option>
+    <option value="1">Yearly</option>
+</select>
+
+<br><br>
+
+<label for="contri-amount">Contribution Amount:&nbsp;</label>
+<input type="number" id="contri-amount" step="any" min="0" value="125" autocomplete="off">
+<br>
+
+<br><hr><br> <!-- Return Settings --> 
+
+<label for="preset-returns">Presets:&nbsp;</label>
+<select id="preset-returns">
+    <option value="">Manual</option>
+    <option value="spy">S&P500</option>
+    <option value="qqq">NASDAQ 100</option>
+</select>
+
+<br><br><br><br>
+<button id="submit-btn">Run Simulation</button>
+
+<p id="output"></p>
