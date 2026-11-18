@@ -34,6 +34,7 @@ function normRand(mean = 0, stdDev = 1) {
 
 const run = document.getElementById("run-button");
 let simMarketData = null;
+let percentBeatingSavings = null;
 
 run.addEventListener("click", () => { runSim(); });
 
@@ -121,25 +122,29 @@ function runSim() {
 
         const savings = savingsPath[step];
         const simsAboveSavings = stepValues.filter(i => i > savings).length;
-        pct.push(simsAboveSavings / iterations);
+        pct.push(100*(simsAboveSavings / iterations));
     }
 
     simMarketData = [
-        { data: p10 , name: "p10", color: "#44ce1b"},
-        { data: p30 , name: "p30", color: "#bbdb44"},
-        { data: p50 , name: "p50", color: "#2600ff"},
-        { data: p70 , name: "p70", color: "#f2a134"},
-        { data: p90 , name: "p90", color: "#e51f1f"} 
+        { data: p10 , name: "p10" , color: "#e51f1f"},
+        { data: p30 , name: "p30" , color: "#f2a134"},
+        { data: p50 , name: "p50" , color: "#2600ff"},
+        { data: p70 , name: "p70" , color: "#bbdb44"},
+        { data: p90 , name: "p90" , color: "#44ce1b"} 
     ]
+    percentBeatingSavings = [ { data: pct , name: "% Beating Savings" , color: "#f3f"}];
 
     // Chart Settings ...
     const logspace = document.getElementById("logspace").checked;
     const benchmark = document.getElementById("savings-subtract").checked;
 
     drawChart("simChart", simMarketData, totalSteps, contriFreq, savingsPath, logspace, benchmark, true);
+    drawChart("percentChart", percentBeatingSavings, totalSteps, contriFreq, undefined, undefined, undefined, undefined, 0, 100, "%", 1);
+    
 }
 
-function drawChart(canvasId, data, totalSteps, contriFreq, benchmarkData = null, logspace = false, benchmark = false, fill = false) {
+function drawChart(canvasId, data, totalSteps, contriFreq, benchmarkData = null, 
+    logspace = false, benchmark = false, fill = false, min = null, max = null, sign = "$", back = false) {
 
     // Transform functions
     const logt = (arr) => logspace ? arr.map(v => v > 0 ? Math.log(v) : 0) : arr;
@@ -175,8 +180,8 @@ function drawChart(canvasId, data, totalSteps, contriFreq, benchmarkData = null,
     ctx.clearRect(0, 0, width, height);
 
     const allValues = [...transformedData.flatMap(v => v.data), ...(transformedBenchmark || [])];
-    const minVal = Math.min(...allValues) * 0.95 ||   0;
-    const maxVal = Math.max(...allValues) * 1.05 || 100;
+    const minVal = (min == null) ? Math.min(...allValues) * 0.95 : min;
+    const maxVal = (max == null) ? Math.max(...allValues) * 1.05 : max;
 
     const getX = (step) => pad.left + (step / totalSteps) * plotW;
     const getY = (val) => pad.top + plotH - ((val - minVal) / (maxVal - minVal)) * plotH;
@@ -197,7 +202,9 @@ function drawChart(canvasId, data, totalSteps, contriFreq, benchmarkData = null,
         ctx.lineTo(width - pad.right, y);
         ctx.stroke();
 
-        ctx.fillText("$" + Math.round(val).toLocaleString(), pad.left - 10, y);
+        const str = Math.round(val).toLocaleString()
+        const l = (back) ? str + sign : sign + str;
+        ctx.fillText(l, pad.left - 10, y);
     }
 
     ctx.textAlign = "center";
