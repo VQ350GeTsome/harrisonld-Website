@@ -8,7 +8,8 @@
     <script src="esei.js" defer></script>
 </head>
 
-<br><hr><br> <!-- Contribution Settings --> 
+<br><hr class="hf-ln">            <!-- Contribution Settings --> 
+<h3>Contribution Settings ...</h3>
 
 <label for="lump-sum">Lump-sum Amount:&nbsp;</label>
 <input type="number" id="lump-sum" step="any" min="0" value="1000">
@@ -32,7 +33,8 @@
 <label for="contri-amount">Contribution Amount:&nbsp;</label>
 <input type="number" id="contri-amount" step="any" min="0" value="125">
 
-<br><br><hr><br> <!-- Market Return Settings --> 
+<br><br><hr class="hf-ln">            <!-- Market Return Settings --> 
+<h3>Market Return Settings ...</h3>
 
 <label for="preset-returns">Presets:&nbsp;</label>
 <select id="preset-returns">
@@ -51,16 +53,23 @@
 <label for="volatility">Risk / Volatility %:&nbsp;</label>
 <input type="number" id="volatility" class="marketInputs" step="any" min="0" value="17.50" max="100">
 
-<br><br><hr><br> <!-- Savings Return Settings --> 
+<br><br><hr class="hf-ln">          <!-- Savings Return Settings --> 
+<h3>Savings Return Settings ...</h3>
 
 <label for="interest">Average Interest %:&nbsp;</label>
 <input type="number" id="interest" step="any" min="0" value="3.15">
 
-<br><br><hr><br>
+<br><br><hr class="hf-ln">          <!-- Simulation Settings --> 
+<h3>Simulation Settings ...</h3>
 
 <label for="iterations">Monte Carlo Iterations:&nbsp;</label>
 <input type="number" id="iterations" step="any" min="0" value="1000">
 
 <br><br>
+
+<label for="years">Years to Simulate:&nbsp;</label>
+<input type="number" id="years" step="any" min="0" max="100" value="15">
+
+<br><br>
 <label>Run Monte Carlo:&nbsp;</label>
-<button id="submit-btn" class="wide-button"> Start! </button>
+<button id="run-button" class="wide-button"> Start! </button>
