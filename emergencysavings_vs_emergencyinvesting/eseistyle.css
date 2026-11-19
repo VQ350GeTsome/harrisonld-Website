@@ -9,3 +9,23 @@
     width : 66%;
     min-width: 375px;
 }
+
+#EoSTable {
+    border-collapse: collapse;
+    width: 260px;
+}
+
+#EoSTable th {
+    border: 1px solid #000000;
+    padding: 8px 12px;
+    text-align: right;
+    white-space: nowrap;
+    background-color:bisque;
+}
+
+#EoSTable td {
+    border: 1px solid #000000;
+    padding: 8px 12px;
+    text-align: right;
+    white-space: nowrap;
+}

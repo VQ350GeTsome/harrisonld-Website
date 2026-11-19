@@ -139,7 +139,9 @@ function runSim() {
     const p50 = [];
     const p70 = [];
     const p90 = [];
-    const pct = [];
+
+    const pctB = [];
+    const pctL = [];
 
     for (let step = 0; step <= totalSteps; step++) {
         const yearNum = (step / stepFreq).toFixed(1);
@@ -155,7 +157,10 @@ function runSim() {
 
         const savings = savingsPath[step];
         const simsAboveSavings = stepValues.filter(i => i > savings).length;
-        pct.push(100*(simsAboveSavings / iterations));
+
+        const pct = 100*(simsAboveSavings / iterations);
+        pctB.push(pct);
+        pctL.push(100-pct);
     }
 
     simMarketData = [
@@ -165,15 +170,50 @@ function runSim() {
         { data: p70 , name: "p70" , color: "#bbdb44"},
         { data: p90 , name: "p90" , color: "#44ce1b"} 
     ]
-    percentBeatingSavings = [ { data: pct , name: "% Beating Savings" , color: "#f3f"}];
+    percentBeatingSavings = [ 
+        { data: pctB , name: "% Over Savings"  , color: "#f3f"},
+        { data: pctL , name: "% Under Savings" , color: "#3f3"}
+    ];
 
     // Chart Settings ...
     const logspace = document.getElementById("logspace").checked;
     const benchmark = document.getElementById("savings-subtract").checked;
 
-    drawChart("simChart", simMarketData, totalSteps, stepFreq, savingsPath, logspace, benchmark, true);
+    drawChart("simChart", simMarketData, totalSteps, stepFreq, savingsPath, logspace, benchmark, true, null, null, (logspace) ? "ln" : "$", (logspace) ? 1 : 0);
     drawChart("percentChart", percentBeatingSavings, totalSteps, stepFreq, undefined, undefined, undefined, undefined, 0, 100, "%", 1);
-    
+
+    // Format Currency and whatnot ...
+    function roundNStuff(value, sign = "$", back = 0) {
+        if (isNaN(value) || value === null) return "$0.00";
+        if (value === 0) return "$0.00";
+
+        const isNegative = value < 0;
+        const absValue = Math.abs(value);
+
+        const fixed = absValue.toFixed(2);
+
+        const parts = fixed.split(".");
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+        let formatted = parts.join(".");
+        formatted = (back) ? formatted + sign : sign + formatted;
+        return isNegative ? `(${formatted})` : formatted;
+    }
+
+    const rows = ["savings", "p90", "p70", "p50", "p30", "p10"];
+    const results = {savings: savingsPath.at(-1), p90: p90.at(-1),  p70: p70.at(-1), p50: p50.at(-1),  p30: p30.at(-1), p10: p10.at(-1)}
+
+    rows.forEach(key => {
+        const endValue = results[key];
+        const gainLoss = endValue - results.savings;
+        const logPoints = Math.log(endValue);
+        const ratio = endValue / results.savings;
+
+        document.getElementById(key + "v").textContent = roundNStuff(endValue);
+        document.getElementById(key + "b").textContent = roundNStuff(gainLoss);
+        document.getElementById(key + "l").textContent = roundNStuff(logPoints, "ln", 1);
+        document.getElementById(key + "r").textContent = roundNStuff(ratio, "x", 1);
+    });
 }
 
 function drawChart(canvasId, data, totalSteps, stepFreq, benchmarkData = null, 
