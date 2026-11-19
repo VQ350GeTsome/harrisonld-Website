@@ -1,56 +1,8 @@
-// Market Presets
+// Cached Values
+let simMarketData = null, savingsPath = null, percentBeatingSavings = null;
+let stepFreq = 0, totalSteps = 0;
 
-const market_presets = {
-    // US Markets
-    SPY:    { cagr:   9.60, volatility: 17.50 },
-    QQQ:    { cagr:  14.40, volatility: 25.65 },
-    RUS:    { cagr:  11.10, volatility: 19.95 },
-    USSCV:  { cagr:  12.95, volatility: 19.75 },
-
-    // Metals
-    Gold:   { cagr:   8.15, volatility: 19.40 },
-    Silver: { cagr:   5.15, volatility: 34.20 },
-
-    // Vangaurd's Totals
-    VT:     { cagr:   9.90, volatility: 16.40 },
-    VTI:    { cagr:  10.29, volatility: 17.55 },
-    VXUS:   { cagr:   8.70, volatility: 18.35 },
-
-    // Misc
-    BTC:    { cagr: 126.25, volatility: 96.50 },
-    CDTY:   { cagr:   3.70, volatility: 20.35 },
-    MFUT:   { cagr:   7.50, volatility: 14.10 },
-    REIT:   { cagr:   6.15, volatility: 33.25 }
-    
-}
-
-const marketSelect = document.getElementById("preset-returns");
-const cagrInput = document.getElementById("cagr");
-const volatilityInput = document.getElementById("volatility");
-
-marketSelect.addEventListener("change", () => { 
-    const preset = market_presets[marketSelect.value];
-    if (preset) { cagrInput.value = preset.cagr; volatilityInput.value = preset.volatility; }
-});
-
-const marketInputs = document.querySelectorAll(".marketInputs");
-marketInputs.forEach((input) => {
-    input.addEventListener("input", () => { marketSelect.value = ""; });
-});
-
-// Enforce correct frequency usage 
-const stepFrequency = document.getElementById("step-freq");
-const contriFrequency = document.getElementById("contri-freq");
-function enforceFrequency() {
-    const step = parseInt(stepFrequency.value, 10) || 12;
-    const contri = parseInt(contriFrequency.value, 10) || 12;
-
-    if (step < contri) stepFrequency.value = contri;
-}
-stepFrequency.addEventListener("change", enforceFrequency);
-contriFrequency.addEventListener("change", enforceFrequency);
-
-// Simulation Stuff
+// Gaussian random 
 
 // Use Box Muller to get a normal random ...
 function normRand(mean = 0, stdDev = 1) {
@@ -63,18 +15,12 @@ function normRand(mean = 0, stdDev = 1) {
     return w * stdDev + mean;
 }
 
-const run = document.getElementById("run-button");
-let simMarketData = null;
-let percentBeatingSavings = null;
-
-run.addEventListener("click", () => { runSim(); });
-
 function runSim() {
     console.log("Simulation Running ... ")
 
     // General settings
     const lumpSum = parseFloat(document.getElementById("lump-sum").value) || 10000;
-    const stepFreq = parseInt(stepFrequency.value, 10) || 12;
+    stepFreq = parseInt(stepFrequency.value, 10) || 12;
     const contriFreq = parseInt(contriFrequency.value, 10) || 12;
     const contriAmount = parseFloat(document.getElementById("contri-amount").value) || 0;
     const years = parseFloat(document.getElementById("years").value) || 10;
@@ -88,7 +34,7 @@ function runSim() {
     const marginrate = (applyfees) ? interest + ((parseFloat(document.getElementById("marginrate").value) || 0) / 100.0) : 0;
 
     // Calculate steps and delta time
-    const totalSteps = years * stepFreq;
+    totalSteps = years * stepFreq;
     const dt = 1 / stepFreq;
     const stepsPerContri = Math.round(stepFreq / contriFreq);
 
@@ -244,6 +190,7 @@ function runSim() {
     });
 }
 
+// Clears chart and plots new data
 function drawChart(canvasId, data, totalSteps, stepFreq, benchmarkData = null, 
     logspace = false, benchmark = false, fill = false, min = null, max = null, sign = "$", back = false) {
 
@@ -394,4 +341,73 @@ function drawChart(canvasId, data, totalSteps, stepFreq, benchmarkData = null,
     });
 }
 
+// Uses cached data to refresh with new settings
+function refresh() {
+    const logspace = document.getElementById("logspace").checked;
+    const benchmark = document.getElementById("savings-subtract").checked;
+
+    drawChart("simChart", simMarketData, totalSteps, stepFreq, savingsPath, logspace, benchmark, true, null, null, (logspace) ? "ln" : "$", (logspace) ? 1 : 0);
+    drawChart("percentChart", percentBeatingSavings, totalSteps, stepFreq, undefined, undefined, undefined, undefined, 0, 100, "%", 1);
+}
+
+// Run when run is clicked ... duh
+const run = document.getElementById("run-button");
+run.addEventListener("click", () => { runSim(); });
+
+// Market Presets from Testfol.io simulations 
+const market_presets = {
+    // US Markets
+    SPY:    { cagr:   9.60, volatility: 17.50 },
+    QQQ:    { cagr:  14.40, volatility: 25.65 },
+    RUS:    { cagr:  11.10, volatility: 19.95 },
+    USSCV:  { cagr:  12.95, volatility: 19.75 },
+
+    // Metals
+    Gold:   { cagr:   8.15, volatility: 19.40 },
+    Silver: { cagr:   5.15, volatility: 34.20 },
+
+    // Vangaurd's Totals
+    VT:     { cagr:   9.90, volatility: 16.40 },
+    VTI:    { cagr:  10.29, volatility: 17.55 },
+    VXUS:   { cagr:   8.70, volatility: 18.35 },
+
+    // Misc
+    BTC:    { cagr: 126.25, volatility: 96.50 },
+    CDTY:   { cagr:   3.70, volatility: 20.35 },
+    MFUT:   { cagr:   7.50, volatility: 14.10 },
+    REIT:   { cagr:   6.15, volatility: 33.25 }
+    
+}
+const marketSelect = document.getElementById("preset-returns");
+const cagrInput = document.getElementById("cagr");
+const volatilityInput = document.getElementById("volatility");
+marketSelect.addEventListener("change", () => { 
+    const preset = market_presets[marketSelect.value];
+    if (preset) { cagrInput.value = preset.cagr; volatilityInput.value = preset.volatility; }
+});
+
+const marketInputs = document.querySelectorAll(".marketInputs");
+marketInputs.forEach((input) => {
+    input.addEventListener("input", () => { marketSelect.value = ""; });
+});
+
+// Enforce correct frequency usage 
+const stepFrequency = document.getElementById("step-freq");
+const contriFrequency = document.getElementById("contri-freq");
+function enforceFrequency() {
+    const step = parseInt(stepFrequency.value, 10) || 12;
+    const contri = parseInt(contriFrequency.value, 10) || 12;
+
+    if (step < contri) stepFrequency.value = contri;
+}
+stepFrequency.addEventListener("change", enforceFrequency);
+contriFrequency.addEventListener("change", enforceFrequency);
+
+// Refresh with new settings when settings are changed 
+const logCheck = document.getElementById("logspace");
+const excessCheeck = document.getElementById("savings-subtract");
+logCheck.addEventListener("change", refresh);
+excessCheeck.addEventListener("change", refresh);
+
+// Auto-run & run on refresh
 runSim();
