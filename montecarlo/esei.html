@@ -134,7 +134,7 @@
 <br><br>
 
 <label for="stress">Drawdown to Test (%):&nbsp;</label>
-<input type="number" id="stress" step="any" min="0" max="100" value="35">
+<input type="number" id="stress" step="any" min="0" max="100" value="0">
 
 <br><br>
 
@@ -173,7 +173,7 @@
 
 <h3>End of Simulation Values...</h3>
 
-<table id="EoSTable">
+<table id="EoSTable" class="table">
   <thead>
     <tr>
       <th>Sim</th>
@@ -225,6 +225,43 @@
       <td id="p10b">-</td>
       <td id="p10l">-</td>
       <td id="p10r">-</td>
+    </tr>
+  </tbody>
+</table>
+
+<br><br>
+
+<table id="otherTable" class="table">
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>p beating Savings</th>
+      <td id="savingsv">-</td>
+    </tr>
+    <tr>
+      <th>b</th>
+      <td id="p90v">-</td>
+    </tr>
+    <tr>
+      <th>c</th>
+      <td id="p70v">-</td>
+    </tr>
+    <tr>
+      <th>d</th>
+      <td id="p50v">-</td>
+    </tr>
+    <tr>
+      <th>e</th>
+      <td id="p30v">-</td>
+    </tr>
+    <tr>
+      <th>f</th>
+      <td id="p10v">-</td>
     </tr>
   </tbody>
 </table>
