@@ -274,11 +274,8 @@ function drawChart(canvasId, data, totalSteps, stepFreq, benchmarkData = null,
     canvas.height = Math.round(height * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const pad = { top: 45, right: 30, bottom: 45, left: 85 };
-    const plotW = width - pad.left - pad.right;
-    const plotH = height - pad.top - pad.bottom;
-
     ctx.clearRect(0, 0, width, height);
+    ctx.font = "12px sans-serif";
 
     const allValues = [...transformedData.flatMap(v => v.data), ...(transformedBenchmark || [])];
     const minVal = (min == null) ? Math.min(...allValues) * 0.95 : min;
@@ -287,15 +284,37 @@ function drawChart(canvasId, data, totalSteps, stepFreq, benchmarkData = null,
     const getX = (step) => pad.left + (step / totalSteps) * plotW;
     const getY = (val) => pad.top + plotH - ((val - minVal) / (maxVal - minVal)) * plotH;
 
+    // Measure widest label ... 
+    const yTicks = 5;
+    const yLabels = [];
+    let maxLabelWidth = 0;
+
+    for (let i = 0; i <= yTicks; i++) {
+        const val = minVal + (maxVal - minVal) * (i / yTicks);
+        const str = Math.round(val).toLocaleString();
+        const label = back ? str + sign : sign + str;
+        
+        yLabels.push({ val, label });
+        const width = ctx.measureText(label).width;
+        if (width > maxLabelWidth) maxLabelWidth = width;
+    }
+
+    const pad = { 
+        top: 35, 
+        right: 12, 
+        bottom: 25, 
+        left: Math.ceil(maxLabelWidth) + 12
+    };
+
+    const plotW = width - pad.left - pad.right;
+    const plotH = height - pad.top - pad.bottom;
+
     ctx.strokeStyle = "#e5e7eb";
     ctx.fillStyle = "#4b5563";
-    ctx.font = "12px sans-serif";
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
 
-    const yTicks = 5;
-    for (let i = 0; i <= yTicks; i++) {
-        const val = minVal + (maxVal - minVal) * (i / yTicks);
+    yLabels.forEach(({ val, label }) => {
         const y = getY(val);
 
         ctx.beginPath();
@@ -303,10 +322,8 @@ function drawChart(canvasId, data, totalSteps, stepFreq, benchmarkData = null,
         ctx.lineTo(width - pad.right, y);
         ctx.stroke();
 
-        const str = Math.round(val).toLocaleString()
-        const l = (back) ? str + sign : sign + str;
-        ctx.fillText(l, pad.left - 10, y);
-    }
+        ctx.fillText(label, pad.left - 10, y);
+    });
 
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
