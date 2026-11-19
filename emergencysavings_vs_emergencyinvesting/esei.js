@@ -145,8 +145,9 @@ function runSim() {
     const p70 = [];
     const p90 = [];
 
-    const pctB = [];
-    const pctL = [];
+    const pctB = []; // % beating savings
+    const pctL = []; // % losing against savings
+    const pctD = []; // % of portfolios dead
 
     for (let step = 0; step <= totalSteps; step++) {
         const yearNum = (step / stepFreq).toFixed(1);
@@ -167,9 +168,10 @@ function runSim() {
             simsAboveSavings = stepValues.filter(i => i > savings).length;
         }
 
-        const pct = 100*(simsAboveSavings / iterations);
-        pctB.push(pct);
-        pctL.push(100-pct);
+        const pctAboveSavings = 100*(simsAboveSavings / iterations);
+        pctB.push(pctAboveSavings);
+        pctL.push(100-pctAboveSavings);
+        pctD.push(100*(stepValues.filter(i => 0 >= i).length / iterations));
     }
 
     simMarketData = [
@@ -181,7 +183,8 @@ function runSim() {
     ]
     percentBeatingSavings = [ 
         { data: pctB , name: "% Over Savings"  , color: "#f3f"},
-        { data: pctL , name: "% Under Savings" , color: "#3f3"}
+        { data: pctL , name: "% Under Savings" , color: "#3f3"},
+        { data: pctD , name: "% of Dead Portfolios" , color: "rgb(105, 78, 26)"}
     ];
 
     // Chart Settings ...
