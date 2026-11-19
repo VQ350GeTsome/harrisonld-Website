@@ -75,11 +75,13 @@ function runSim() {
     const contriAmount = parseFloat(document.getElementById("contri-amount").value) || 0;
     const years = parseFloat(document.getElementById("years").value) || 10;
     const leverage = parseFloat(document.getElementById("leverage").value) || 1;
+    const applyfees = document.getElementById("marginfee").checked;
 
     const paths = [];
 
     // Get savings specific settings ...
-    const interest = parseFloat(document.getElementById("interest").value / 100) || 0.0315;
+    const interest = parseFloat(document.getElementById("interest").value / 100) || 0.0335;
+    const marginrate = (applyfees) ? interest + ((parseFloat(document.getElementById("marginrate").value) || 0) / 100.0) : 0;
 
     // Calculate steps and delta time
     const totalSteps = years * stepFreq;
@@ -104,12 +106,13 @@ function runSim() {
     const iterations = parseInt(document.getElementById("iterations").value) || 1000;
     const cagr = cagrInput.value / 100.0;
     const volatility = volatilityInput.value / 100.0;
+    const leverageStepCost = (leverage - 1) * marginrate * dt;
 
     // GBM stuffs 
     const mu = Math.log(1 + cagr);
     const drift = dt*(mu - 0.5*volatility*volatility);
     const diff = volatility*Math.sqrt(dt);
-
+    
     console.log("Market Simulation Running ... ")
 
     // Run all Simulations
@@ -120,8 +123,10 @@ function runSim() {
         for (let step = 1; totalSteps >= step; step++) {
             const contribution = (step % stepsPerContri === 0) ? contriAmount : 0;
             const z = normRand();
-            const chg = leverage*(Math.exp(drift + diff*z) - 1);
-            bal = bal*(Math.max(0, chg+1)) + contribution;
+
+            const chng = leverage*(Math.exp(drift + diff*z) - 1) - leverageStepCost;
+
+            bal = bal*(Math.max(0, chng+1)) + contribution;
             path.push(bal);
         }
         paths.push(path);
@@ -155,8 +160,12 @@ function runSim() {
         p70.push(stepValues[Math.floor(iterations * 0.70)]);
         p90.push(stepValues[Math.floor(iterations * 0.90)]);
 
-        const savings = savingsPath[step];
-        const simsAboveSavings = stepValues.filter(i => i > savings).length;
+        // Starts %s at 50% so the chart is prettier
+        let simsAboveSavings = iterations/2;
+        if (step != 0) {
+            const savings = savingsPath[step];
+            simsAboveSavings = stepValues.filter(i => i > savings).length;
+        }
 
         const pct = 100*(simsAboveSavings / iterations);
         pctB.push(pct);
@@ -295,7 +304,7 @@ function drawChart(canvasId, data, totalSteps, stepFreq, benchmarkData = null,
         const lower = transformedData.at(0).data; 
         const upper = transformedData.at(-1).data; 
 
-        ctx.fillStyle = "rgba(16, 185, 129, 0.12)";
+        ctx.fillStyle = "rgba(170, 255, 200, 0.25)";
         ctx.beginPath();
         
         upper.forEach((val, step) => {
