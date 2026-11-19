@@ -100,11 +100,16 @@ function runSim() {
     const pctL = []; // % losing against savings
     const pctD = []; // % of portfolios dead
 
+    const stress = parseFloat(document.getElementById("stress").value);
+    const stressMulti = 1 - (stress / 100.0);
+
     for (let step = 0; step <= totalSteps; step++) {
         const yearNum = (step / stepFreq).toFixed(1);
         labels.push(step % stepFreq === 0 ? `Year ${step / stepFreq}` : `Yr ${yearNum}`);
 
-        const stepValues = paths.map(path => path[step]).sort((a, b) => a - b);
+        const stepValues =  paths
+                            .map(path => path[step] * stressMulti)
+                            .sort((a, b) => a - b);
         
         p10.push(stepValues[Math.floor(iterations * 0.10)]);
         p30.push(stepValues[Math.floor(iterations * 0.30)]);
@@ -112,29 +117,16 @@ function runSim() {
         p70.push(stepValues[Math.floor(iterations * 0.70)]);
         p90.push(stepValues[Math.floor(iterations * 0.90)]);
 
-        // Starts %s at 50% so the chart is prettier
-        let simsAboveSavings = iterations/2;
-        if (step != 0) {
-            const savings = savingsPath[step];
-            simsAboveSavings = stepValues.filter(i => i > savings).length;
-        }
+        const savings = savingsPath[step];
+        const simsAboveSavings = stepValues.filter(i => i > savings).length;
 
         const pctAboveSavings = 100*(simsAboveSavings / iterations);
-        pctB.push(pctAboveSavings);
-        pctL.push(100-pctAboveSavings);
-        pctD.push(100*(stepValues.filter(i => 0 >= i).length / iterations));
-    }
-
-    // Apply stress test / drawdown
-    const stress = parseFloat(document.getElementById("stress").value);
-    const stressMulti = 1 - (stress / 100.0);
-    const percentiles = [p10, p30, p50, p70, p90];
-    percentiles.forEach(path => {
-        path.forEach((v, i) => {
-            path[i] = v*stressMulti
-        });
-    });
-    
+        if (step > 0) {
+            pctB.push(pctAboveSavings);
+            pctL.push(100-pctAboveSavings);
+            pctD.push(100*(stepValues.filter(i => 0 >= i).length / iterations));
+        }
+    }    
 
     simMarketData = [
         { data: p10 , name: "p10" , color: "#e51f1f"},
@@ -149,12 +141,8 @@ function runSim() {
         { data: pctD , name: "% of Dead Portfolios" , color: "rgb(105, 78, 26)"}
     ];
 
-    // Chart Settings ...
-    const logspace = document.getElementById("logspace").checked;
-    const benchmark = document.getElementById("savings-subtract").checked;
-
-    drawChart("simChart", simMarketData, totalSteps, stepFreq, savingsPath, logspace, benchmark, true, null, null, (logspace) ? "ln" : "$", (logspace) ? 1 : 0);
-    drawChart("percentChart", percentBeatingSavings, totalSteps, stepFreq, undefined, undefined, undefined, undefined, 0, 100, "%", 1);
+    // Get settings and plot charts
+    refresh();
 
     // Format Currency and whatnot ...
     function roundNStuff(value, sign = "$", back = 0) {
@@ -343,9 +331,11 @@ function drawChart(canvasId, data, totalSteps, stepFreq, benchmarkData = null,
 
 // Uses cached data to refresh with new settings
 function refresh() {
+    // Chart Settings
     const logspace = document.getElementById("logspace").checked;
     const benchmark = document.getElementById("savings-subtract").checked;
 
+    // Plot to the two charts
     drawChart("simChart", simMarketData, totalSteps, stepFreq, savingsPath, logspace, benchmark, true, null, null, (logspace) ? "ln" : "$", (logspace) ? 1 : 0);
     drawChart("percentChart", percentBeatingSavings, totalSteps, stepFreq, undefined, undefined, undefined, undefined, 0, 100, "%", 1);
 }
@@ -405,8 +395,8 @@ contriFrequency.addEventListener("change", enforceFrequency);
 
 // Refresh with new settings when settings are changed 
 const logCheck = document.getElementById("logspace");
-const excessCheeck = document.getElementById("savings-subtract");
 logCheck.addEventListener("change", refresh);
+const excessCheeck = document.getElementById("savings-subtract");
 excessCheeck.addEventListener("change", refresh);
 
 // Auto-run & run on refresh
