@@ -1,8 +1,24 @@
 // Market Presets
 
 const market_presets = {
-    SPY: { cagr:  9.6, volatility: 17.50 },
-    QQQ: { cagr: 14.4, volatility: 25.65 }
+    // US Markets
+    SPY:    { cagr:   9.60, volatility: 17.50 },
+    QQQ:    { cagr:  14.40, volatility: 25.65 },
+    TQQQ:   { cagr:  39.20, volatility: 61.35 },
+    USSCV:  { cagr:  12.95, volatility: 19.75 },
+
+    // Metals
+    Gold:   { cagr:   8.15, volatility: 19.40 },
+    Silver: { cagr:   5.15, volatility: 34.20 },
+
+    // Vangaurd's Totals
+    VT:     { cagr:   9.90, volatility: 16.40 },
+    VTI:    { cagr:  10.29, volatility: 17.55 },
+    VXUS:   { cagr:   8.70, volatility: 18.35 },
+
+    // Misc
+    BTC:    { cagr: 126.25, volatility: 96.50 }
+    
 }
 
 const marketSelect = document.getElementById("preset-returns");
