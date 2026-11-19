@@ -4,6 +4,7 @@ const market_presets = {
     // US Markets
     SPY:    { cagr:   9.60, volatility: 17.50 },
     QQQ:    { cagr:  14.40, volatility: 25.65 },
+    RUS:    { cagr:  11.10, volatility: 19.95 },
     USSCV:  { cagr:  12.95, volatility: 19.75 },
 
     // Metals
@@ -16,7 +17,10 @@ const market_presets = {
     VXUS:   { cagr:   8.70, volatility: 18.35 },
 
     // Misc
-    BTC:    { cagr: 126.25, volatility: 96.50 }
+    BTC:    { cagr: 126.25, volatility: 96.50 },
+    CDTY:   { cagr:   3.70, volatility: 20.35 },
+    MFUT:   { cagr:   7.50, volatility: 14.10 },
+    REIT:   { cagr:   6.15, volatility: 33.25 }
     
 }
 
@@ -135,6 +139,7 @@ function runSim() {
     console.log("Market Simulation Complete!")
     console.log(`Generated ${paths.length} paths with ${totalSteps} steps each.`);
     console.log("All Simulations Complete!")
+
     console.log("Sorting ...")
 
     // Sort into percentiles
@@ -174,6 +179,17 @@ function runSim() {
         pctD.push(100*(stepValues.filter(i => 0 >= i).length / iterations));
     }
 
+    // Apply stress test / drawdown
+    const stress = parseFloat(document.getElementById("stress").value);
+    const stressMulti = 1 - (stress / 100.0);
+    const percentiles = [p10, p30, p50, p70, p90];
+    percentiles.forEach(path => {
+        path.forEach((v, i) => {
+            path[i] = v*stressMulti
+        });
+    });
+    
+
     simMarketData = [
         { data: p10 , name: "p10" , color: "#e51f1f"},
         { data: p30 , name: "p30" , color: "#f2a134"},
@@ -212,7 +228,7 @@ function runSim() {
         return isNegative ? `(${formatted})` : formatted;
     }
 
-    const rows = ["savings", "p90", "p70", "p50", "p30", "p10"];
+    let rows = ["savings", "p90", "p70", "p50", "p30", "p10"];
     const results = {savings: savingsPath.at(-1), p90: p90.at(-1),  p70: p70.at(-1), p50: p50.at(-1),  p30: p30.at(-1), p10: p10.at(-1)}
 
     rows.forEach(key => {

@@ -48,16 +48,21 @@
 
     <option value="SPY" selected>S&P500</option>
     <option value="QQQ">NASDAQ 100</option>
+    <option value="RUS">Russell 2000</option>
     <option value="USSCV">US Small Cap Value</option>
 
     <option value="VT">Total World</option>
     <option value="VTI">Total US</option>
-    <option value="VXUS">Total Intl' (EXUS)</option>
+    <option value="VXUS">Total Intl' (ex-US)</option>
     
     <option value="Gold">Gold</option>
     <option value="Silver">Silver</option>
 
     <option value="BTC">Bitcoin</option>
+
+    <option value="CDTY">Commodities</option>
+    <option value="MFUT">Managed Futures</option>
+    <option value="REIT">Real-Estate Investment Trusts</option>
 
 </select>
 <label>&nbsp;Preset Source:&nbsp;<a href="https://testfol.io" target="_blank">Testfol.io</a>&nbsp;Updated:&nbsp;November 18th 2026</label>
@@ -69,7 +74,7 @@
 
 <br><br>
 
-<label for="volatility">Risk / Volatility (%):&nbsp;</label>
+<label for="volatility">Annualized Volatility (%):&nbsp;</label>
 <input type="number" id="volatility" class="marketInputs" step="any" min="0" value="17.50" max="100">
 
 <br><br>
@@ -126,6 +131,11 @@
 
 <br><br>
 
+<label for="stress">Drawdown to Test (%):&nbsp;</label>
+<input type="number" id="stress" step="any" min="0" max="100" value="35">
+
+<br><br>
+
 <label for="logspace">Transform to Logspace?&nbsp;</label>
 <input type="checkbox" id="logspace">
 
@@ -159,7 +169,7 @@
 
 <br><br><hr class="hf-ln">  
 
-<h3>End of Simulation Values ...</h3>
+<h3>End of Simulation Values...</h3>
 
 <table id="EoSTable">
   <thead>
