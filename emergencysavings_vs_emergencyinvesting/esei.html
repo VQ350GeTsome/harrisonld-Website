@@ -48,7 +48,6 @@
 
     <option value="SPY" selected>S&P500</option>
     <option value="QQQ">NASDAQ 100</option>
-    <option value="TQQQ">3x NASDAQ 100</option>
     <option value="USSCV">US Small Cap Value</option>
 
     <option value="VT">Total World</option>
@@ -65,21 +64,28 @@
 
 <br><br>
 
-<label for="cagr">Average Growth %:&nbsp;</label>
+<label for="cagr">Average Growth (%):&nbsp;</label>
 <input type="number" id="cagr" class="marketInputs" step="any" min="0" value="9.60">
 
 <br><br>
 
-<label for="volatility">Risk / Volatility %:&nbsp;</label>
+<label for="volatility">Risk / Volatility (%):&nbsp;</label>
 <input type="number" id="volatility" class="marketInputs" step="any" min="0" value="17.50" max="100">
+
+<br><br>
+
+<label for="leverage">Leverage:&nbsp;</label>
+<input type="number" id="leverage" step="0.1" min="0" value="1" max="5">
+<label>&nbsp;Amount to multiply returns. Use a Daily Step Frequency for most realistic results</label>
 
 <!-- Savings Return Settings --> 
 
 <br><br><hr class="hf-ln">          
 <h3>Savings Return Settings ...</h3>
 
-<label for="interest">Average Interest %:&nbsp;</label>
-<input type="number" id="interest" step="any" min="0" value="3.15">
+<label for="interest">Average Interest (%):&nbsp;</label>
+<input type="number" id="interest" step="any" min="0" value="3.35">
+<label>The fed has paid out an average of 3.35% since 1930 as of November 18th 2026</label>
 
 <!-- Simulation Settings --> 
 
@@ -88,6 +94,20 @@
 
 <label for="iterations">Monte Carlo Iterations:&nbsp;</label>
 <input type="number" id="iterations" step="any" min="5" value="1000">
+
+<br><br>
+
+<label for="step-freq">Step Frequency:&nbsp;</label>
+<select id="step-freq">  
+    <option value="252">Daily</option>
+    <option value="52" selected>Weekly</option>
+    <option value="26">Biweekly</option>
+    <option value="12">Monthly</option>
+    <option value="6">Bimonthly</option>
+    <option value="4">Quarterly</option>
+    <option value="2">Biquarterly</option>
+    <option value="1">Yearly</option>
+</select>
 
 <br><br>
 

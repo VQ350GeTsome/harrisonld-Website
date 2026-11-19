@@ -4,7 +4,6 @@ const market_presets = {
     // US Markets
     SPY:    { cagr:   9.60, volatility: 17.50 },
     QQQ:    { cagr:  14.40, volatility: 25.65 },
-    TQQQ:   { cagr:  39.20, volatility: 61.35 },
     USSCV:  { cagr:  12.95, volatility: 19.75 },
 
     // Metals
@@ -35,6 +34,18 @@ marketInputs.forEach((input) => {
     input.addEventListener("input", () => { marketSelect.value = ""; });
 });
 
+// Enforce correct frequency usage 
+const stepFrequency = document.getElementById("step-freq");
+const contriFrequency = document.getElementById("contri-freq");
+function enforceFrequency() {
+    const step = parseInt(stepFrequency.value, 10) || 12;
+    const contri = parseInt(contriFrequency.value, 10) || 12;
+
+    if (step < contri) stepFrequency.value = contri;
+}
+stepFrequency.addEventListener("change", enforceFrequency);
+contriFrequency.addEventListener("change", enforceFrequency);
+
 // Simulation Stuff
 
 // Use Box Muller to get a normal random ...
@@ -59,9 +70,11 @@ function runSim() {
 
     // General settings
     const lumpSum = parseFloat(document.getElementById("lump-sum").value) || 10000;
-    const contriFreq = parseInt(document.getElementById("contri-freq").value, 10) || 12;
+    const stepFreq = parseInt(stepFrequency.value, 10) || 12;
+    const contriFreq = parseInt(contriFrequency.value, 10) || 12;
     const contriAmount = parseFloat(document.getElementById("contri-amount").value) || 0;
     const years = parseFloat(document.getElementById("years").value) || 10;
+    const leverage = parseFloat(document.getElementById("leverage").value) || 1;
 
     const paths = [];
 
@@ -69,8 +82,9 @@ function runSim() {
     const interest = parseFloat(document.getElementById("interest").value / 100) || 0.0315;
 
     // Calculate steps and delta time
-    const totalSteps = years * contriFreq;
-    const dt = 1 / contriFreq;
+    const totalSteps = years * stepFreq;
+    const dt = 1 / stepFreq;
+    const stepsPerContri = Math.round(stepFreq / contriFreq);
 
     console.log("Savings Simulation Running ... ")
 
@@ -79,7 +93,8 @@ function runSim() {
     let save = lumpSum;
     savingsPath = [save];
     for (let step = 1; totalSteps >= step; step++) {
-        save = save * stepGrowth + contriAmount;
+        const contribution = (step % stepsPerContri === 0) ? contriAmount : 0;
+        save = save * stepGrowth + contribution;
         savingsPath.push(save);
     }
 
@@ -103,8 +118,10 @@ function runSim() {
         const path = [bal];
 
         for (let step = 1; totalSteps >= step; step++) {
+            const contribution = (step % stepsPerContri === 0) ? contriAmount : 0;
             const z = normRand();
-            bal = bal*Math.exp(drift + diff*z) + contriAmount;
+            const chg = leverage*(Math.exp(drift + diff*z) - 1);
+            bal = bal*(Math.max(0, chg+1)) + contribution;
             path.push(bal);
         }
         paths.push(path);
@@ -125,8 +142,8 @@ function runSim() {
     const pct = [];
 
     for (let step = 0; step <= totalSteps; step++) {
-        const yearNum = (step / contriFreq).toFixed(1);
-        labels.push(step % contriFreq === 0 ? `Year ${step / contriFreq}` : `Yr ${yearNum}`);
+        const yearNum = (step / stepFreq).toFixed(1);
+        labels.push(step % stepFreq === 0 ? `Year ${step / stepFreq}` : `Yr ${yearNum}`);
 
         const stepValues = paths.map(path => path[step]).sort((a, b) => a - b);
         
@@ -154,12 +171,12 @@ function runSim() {
     const logspace = document.getElementById("logspace").checked;
     const benchmark = document.getElementById("savings-subtract").checked;
 
-    drawChart("simChart", simMarketData, totalSteps, contriFreq, savingsPath, logspace, benchmark, true);
-    drawChart("percentChart", percentBeatingSavings, totalSteps, contriFreq, undefined, undefined, undefined, undefined, 0, 100, "%", 1);
+    drawChart("simChart", simMarketData, totalSteps, stepFreq, savingsPath, logspace, benchmark, true);
+    drawChart("percentChart", percentBeatingSavings, totalSteps, stepFreq, undefined, undefined, undefined, undefined, 0, 100, "%", 1);
     
 }
 
-function drawChart(canvasId, data, totalSteps, contriFreq, benchmarkData = null, 
+function drawChart(canvasId, data, totalSteps, stepFreq, benchmarkData = null, 
     logspace = false, benchmark = false, fill = false, min = null, max = null, sign = "$", back = false) {
 
     // Transform functions
@@ -225,11 +242,11 @@ function drawChart(canvasId, data, totalSteps, contriFreq, benchmarkData = null,
 
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    const totalYears = Math.round(totalSteps / contriFreq);
+    const totalYears = Math.round(totalSteps / stepFreq);
     const yearStep = Math.max(1, Math.ceil(totalYears / 10));
 
     for (let yr = 0; yr <= totalYears; yr += yearStep) {
-        const step = Math.min(totalSteps, yr * contriFreq);
+        const step = Math.min(totalSteps, yr * stepFreq);
         const x = getX(step);
         ctx.fillText(`Yr ${yr}`, x, height - pad.bottom + 10);
     }
@@ -277,7 +294,7 @@ function drawChart(canvasId, data, totalSteps, contriFreq, benchmarkData = null,
     transformedData.forEach(v => { plotLine(v.data, v.color, v.name, lineWidth) });
 
     // Add Benchmark
-    if (benchmark) plotLine(transformedBenchmark, "#6b7280", "Savings", lineWidth, true); 
+    if (benchmarkData) plotLine(transformedBenchmark, "#6b7280", "Savings", lineWidth, true); 
     
 
     let legendX = pad.left;
