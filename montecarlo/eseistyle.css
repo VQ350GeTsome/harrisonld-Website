@@ -32,3 +32,21 @@ html {
     text-align: right;
     white-space: nowrap;
 }
+
+/* table0 will only color the right part thing */
+.table0 {
+    border-collapse: collapse;
+    width: 260px;
+}
+
+.table0 th,
+.table0 td {
+    border: 1px solid #000000;
+    padding: 8px 12px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.table0 tr th:first-child {
+    background-color: bisque;
+}
